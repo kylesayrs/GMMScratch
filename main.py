@@ -7,7 +7,7 @@ from loss import get_nll_loss
 
 
 if __name__ == "__main__":
-    K = 1
+    K = 2
     D = 2
     samples_per_k = 50
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     ys = ys.transpose(0, 1)  # [X, K, D]
     ys = ys.unsqueeze(-1)  # [X, K, D, 1]
 
-    pis = torch.nn.Parameter(torch.rand(K, dtype=torch.float32), requires_grad=True)
+    pis = torch.nn.Parameter(torch.zeros(K, dtype=torch.float32), requires_grad=True)
     mus = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
     #sigmas_sqrt = torch.nn.Parameter(torch.rand(K, D, D, dtype=torch.float32), requires_grad=True)
     sigmas_diag = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         optimizer.zero_grad()
 
         #sigmas = sigmas_sqrt.transpose(-2, -1) @ sigmas_sqrt
-        sigmas = torch.diag_embed(sigmas_diag)
+        sigmas = torch.diag_embed(torch.abs(sigmas_diag))
 
         loss = get_nll_loss(
             ys,
@@ -66,7 +66,14 @@ if __name__ == "__main__":
         )
 
         # visualize
+        colors = ["red", "blue", "green"]
         if i % 1000 == 0:
+            print(loss.item())
+            print(pis)
+            print(mus)
+            print(sigmas)
+            print("----")
+            
             for k in range(K):
                 x = numpy.linspace(-10, 10, num=100)
                 y = numpy.linspace(-10, 10, num=100)
@@ -81,16 +88,11 @@ if __name__ == "__main__":
                     for j in range(X.shape[1]):
                         pdf[i,j] = distr.pdf([X[i,j], Y[i,j]])
 
-                plt.contour(X, Y, pdf, colors="red" if k == 0 else "blue")
+                plt.contour(X, Y, pdf, colors=colors[k])
 
             plt.scatter(*all_samples.T)
-            plt.show()
 
-            print(loss.item())
-            print(pis)
-            print(mus)
-            print(sigmas)
-            print("----")
+            plt.show()
 
         # backpropagate
         loss.backward()
