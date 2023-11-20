@@ -24,22 +24,26 @@ def get_nll_loss(
 ):
     num_samples = ys.shape[0]
 
-    pis = pis.repeat(num_samples, 1)  # [X, K]
+    log_pis = torch.log_softmax(pis, dim=0)
+    log_pis = log_pis.repeat(num_samples, 1)  # [X, K]
 
     mus = mus.repeat(num_samples, 1, 1)  # [X, K, D]
     mus = mus.unsqueeze(-1)  # [X, K, D, 1]
 
     sigmas = sigmas.repeat(num_samples, 1, 1, 1)  # [X, K, D, D]
 
-    sigmas_sqrt = torch.linalg.cholesky(sigmas)
-    print(sigmas_sqrt.shape)
+    #sigmas_sqrt = torch.linalg.cholesky(sigmas)
+    sigmas_inverse = torch.cholesky_inverse(sigmas)
 
     y_minus_mu = ys - mus  # [X, K, D, 1]
-    y_minus_mu_sigmas_sqrt = y_minus_mu.transpose(-2, -1) @ sigmas_sqrt  # [X, K, D, D]
 
-    #first_term = torch.log(pis)  # [X, K]
-    second_term = -0.5 * y_minus_mu_sigmas_sqrt @ y_minus_mu_sigmas_sqrt.transpose(-2, -1)  # [X, K, 1, 1]
+    first_term = log_pis  # [X, K]
+    second_term = -0.5 * y_minus_mu.transpose(-2, -1) @ sigmas_inverse @ y_minus_mu  # [X, K, 1, 1]
     #third_term = -0.5 * torch.logdet(sigmas)  # [X, K]
+    #third_term = -0.5 * torch.log(torch.det(
+    third_term = -0.5 * torch.logdet(
+        sigmas
+    )  # [X, K]
     
     #print(sigmas.shape)
     #print(first_term.shape)
@@ -48,9 +52,9 @@ def get_nll_loss(
     #exit(0)
 
     log_likelihoods = torch.logsumexp(
-        #first_term.flatten() +
-        second_term.flatten(),# +
-        #third_term.flatten(),
+        first_term.flatten() +
+        second_term.flatten() +
+        third_term.flatten(),
         dim=0
     )
 
