@@ -9,7 +9,7 @@ from loss import get_nll_loss
 if __name__ == "__main__":
     K = 1
     D = 2
-    samples_per_k = 500
+    samples_per_k = 50
 
     true_mus = []
     true_sigmas = []
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     pis = torch.nn.Parameter(torch.rand(K, dtype=torch.float32), requires_grad=True)
     mus = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
     #sigmas_sqrt = torch.nn.Parameter(torch.rand(K, D, D, dtype=torch.float32), requires_grad=True)
-    sigmas_diag = torch.nn.Parameter(torch.rand(D, dtype=torch.float32), requires_grad=True)
+    sigmas_diag = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
     parameters = [
         pis,
         mus,
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         #sigmas_sqrt
     ]
 
-    optimizer = torch.optim.SGD(parameters, lr=0.1, momentum=0.6)
+    optimizer = torch.optim.Adam(parameters, lr=0.1)
 
     i = 0
     while True:
@@ -55,17 +55,14 @@ if __name__ == "__main__":
 
         optimizer.zero_grad()
 
-        #sigmas = sigmas_sqrt @ sigmas_sqrt.transpose(-2, -1) + 1e-4
-        sigmas = torch.diag(torch.abs(sigmas_diag) + 1e-4).unsqueeze(0)
-        #exit(0)
+        #sigmas = sigmas_sqrt.transpose(-2, -1) @ sigmas_sqrt
+        sigmas = torch.diag_embed(sigmas_diag)
 
         loss = get_nll_loss(
             ys,
             pis,
             mus,
-            sigmas
-            #sigmas,
-            #sigmas_sqrt
+            sigmas,
         )
 
         # visualize
