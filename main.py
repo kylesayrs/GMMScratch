@@ -7,7 +7,7 @@ from loss import get_nll_loss
 
 
 if __name__ == "__main__":
-    K = 2
+    K = 20
     D = 2
     samples_per_k = 50
 
@@ -34,17 +34,17 @@ if __name__ == "__main__":
     ys = ys.unsqueeze(-1)  # [X, K, D, 1]
 
     pis = torch.nn.Parameter(torch.zeros(K, dtype=torch.float32), requires_grad=True)
-    mus = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
-    #sigmas_sqrt = torch.nn.Parameter(torch.rand(K, D, D, dtype=torch.float32), requires_grad=True)
-    sigmas_diag = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
+    mus = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32) * 10, requires_grad=True)
+    sigmas_sqrt = torch.nn.Parameter(torch.rand(K, D, D, dtype=torch.float32), requires_grad=True)
+    #sigmas_diag = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
     parameters = [
         pis,
         mus,
-        sigmas_diag,
-        #sigmas_sqrt
+        #sigmas_diag,
+        sigmas_sqrt
     ]
 
-    optimizer = torch.optim.Adam(parameters, lr=0.1)
+    optimizer = torch.optim.Adam(parameters, lr=0.5)
 
     i = 0
     while True:
@@ -55,8 +55,8 @@ if __name__ == "__main__":
 
         optimizer.zero_grad()
 
-        #sigmas = sigmas_sqrt.transpose(-2, -1) @ sigmas_sqrt
-        sigmas = torch.diag_embed(torch.abs(sigmas_diag))
+        sigmas = sigmas_sqrt.transpose(-2, -1) @ sigmas_sqrt
+        #sigmas = torch.diag_embed(torch.abs(sigmas_diag))
 
         loss = get_nll_loss(
             ys,
@@ -66,14 +66,15 @@ if __name__ == "__main__":
         )
 
         # visualize
-        colors = ["red", "blue", "green"]
-        if i % 1000 == 0:
+        colors = ["red", "blue", "green", "orange", "purple"] * 10
+        if i % 100 == 0:
             print(loss.item())
             print(pis)
             print(mus)
             print(sigmas)
             print("----")
             
+            pi_logits = torch.softmax(pis.detach(), dim=0)
             for k in range(K):
                 x = numpy.linspace(-10, 10, num=100)
                 y = numpy.linspace(-10, 10, num=100)
@@ -88,7 +89,7 @@ if __name__ == "__main__":
                     for j in range(X.shape[1]):
                         pdf[i,j] = distr.pdf([X[i,j], Y[i,j]])
 
-                plt.contour(X, Y, pdf, colors=colors[k])
+                plt.contour(X, Y, pdf, colors=colors[k], alpha=float(pi_logits[k]))
 
             plt.scatter(*all_samples.T)
 
