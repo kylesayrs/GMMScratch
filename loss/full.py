@@ -27,7 +27,7 @@ def get_full_nll_loss(
     # compute likelihood
     first_term = log_pis  # [X, K]
     second_term = -0.5 * y_minus_mu.transpose(-2, -1) @ sigmas_inverse @ y_minus_mu  # [X, K, 1, 1]
-    third_term = -0.5 * torch.logdet(sigmas).nan_to_num(nan=0.0, neginf=0.0)  # [X, K] numerical stability
+    third_term = -0.5 * torch.logdet(sigmas).nan_to_num(nan=0.0, neginf=0.0)  # [X, K]
 
     log_likelihoods = torch.logsumexp(
         first_term +
