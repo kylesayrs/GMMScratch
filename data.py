@@ -3,11 +3,14 @@ from typing import Tuple, List
 import torch
 import numpy
 
+from MixtureFamily import MixtureFamily
+
 
 def sample_data(
     num_samples: int,
     num_clusters: int,
-    D: int
+    D: int,
+    family: MixtureFamily
 ) -> Tuple[List[numpy.ndarray], List[numpy.ndarray], torch.Tensor]:
     """
     Sample data from mock gaussian distributions
@@ -25,9 +28,12 @@ def sample_data(
 
     for _ in range(num_clusters):
         true_mu = numpy.random.rand(D) * 10
-        #true_sigma_sqrt = numpy.random.rand(D, D)
-        #true_sigma = true_sigma_sqrt.T @ true_sigma_sqrt
-        true_sigma = numpy.diag(numpy.random.rand(D))
+
+        if family == MixtureFamily.FULL:
+            true_sigma_sqrt = numpy.random.rand(D, D)
+            true_sigma = true_sigma_sqrt.T @ true_sigma_sqrt
+        else:
+            true_sigma = numpy.diag(numpy.random.rand(D))
 
         samples = numpy.random.multivariate_normal(true_mu, true_sigma, samples_per_cluster)
 

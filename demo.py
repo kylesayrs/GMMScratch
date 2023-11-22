@@ -7,6 +7,7 @@ from scipy.stats import multivariate_normal
 from data import sample_data
 from loss.full import get_full_nll_loss
 from loss.diagonal import get_diagonal_nll_loss
+from MixtureFamily import MixtureFamily
 
 
 parser = argparse.ArgumentParser()
@@ -21,19 +22,23 @@ if __name__ == "__main__":
     numpy.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
+    mixture_family = MixtureFamily.FULL
+
     K = 2
     D = 2
 
-    all_samples, true_mus, true_sigmas = sample_data(args.num_samples, args.num_clusters, D)
+    all_samples, true_mus, true_sigmas = sample_data(
+        args.num_samples, args.num_clusters, D, mixture_family
+    )
 
     # all_samples  [X, D]
     ys = all_samples.repeat(K, 1, 1)  # [K, X, D]
     ys = ys.transpose(0, 1)  # [X, K, D]
 
     # set up model
-    pi_logits = torch.nn.Parameter(torch.zeros(K, dtype=torch.float32), requires_grad=True)
+    pi_logits = torch.nn.Parameter(torch.rand(K, dtype=torch.float32), requires_grad=False)
     mus = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32) * 10, requires_grad=True)
-    if False:
+    if mixture_family == MixtureFamily.FULL:
         sigmas_sqrt = torch.nn.Parameter(torch.rand(K, D, D, dtype=torch.float32), requires_grad=True)
         parameters = [pi_logits, mus, sigmas_sqrt]
     else:
@@ -47,15 +52,14 @@ if __name__ == "__main__":
     while True:
         optimizer.zero_grad()
 
-        if False:
-            #_sigmas_sqrt = torch.exp(sigmas_sqrt + 1e-6)
+        if mixture_family == MixtureFamily.FULL:
             sigmas = sigmas_sqrt.transpose(-2, -1) @ sigmas_sqrt
 
             loss = get_full_nll_loss(ys, pi_logits, mus, sigmas)
         else:
-            sigmas = torch.diag_embed(torch.abs(sigmas_diag + 1e-6))
+            sigmas = torch.diag_embed(torch.abs(sigmas_diag))
 
-            loss = get_diagonal_nll_loss(ys, pi_logits, mus, torch.exp(sigmas_diag + 1e-6))
+            loss = get_diagonal_nll_loss(ys, pi_logits, mus, sigmas_diag)
 
         # visualize
         colors = ["red", "blue", "green", "orange", "purple"] * 10

@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 
-class MixtureFamily:
+class MixtureFamily(Enum):
     FULL = auto()              # fully expressive eigenvalues
     DIAGONAL = auto()          # eigenvalues align with data axes
     ISOTROPIC = auto()         # same variance for all directions
