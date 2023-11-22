@@ -2,22 +2,22 @@ import torch
 
 
 def get_diagonal_nll_loss(
-    _ys: torch.Tensor,  # [X, K, D, 1]
-    pis: torch.Tensor,  # [K]
-    _mus: torch.Tensor,  # [K, D]
-    _sigmas_diag: torch.Tensor,  # [K, D]
+    ys: torch.Tensor,  # [X, K, D, 1]
+    pi_logits: torch.Tensor,  # [K]
+    mus: torch.Tensor,  # [K, D]
+    sigmas_diag: torch.Tensor,  # [K, D]
 ):
-    num_samples = _ys.shape[0]
+    num_samples = ys.shape[0]
 
     # pis are an element of the K-1 simplex
-    _log_pis = torch.log(pis)
-    log_pis = _log_pis.repeat(num_samples, 1)  # [X, K]
+    log_pis = torch.log_softmax(pi_logits, dim=0)
+    log_pis = log_pis.repeat(num_samples, 1)  # [X, K]
 
     # 
-    ys = _ys.squeeze(-1)  # [X, K, D]
-    mus = _mus.repeat(num_samples, 1, 1)  # [X, K, D]
+    mus = mus.repeat(num_samples, 1, 1)  # [X, K, D]
 
-    sigmas_diag = _sigmas_diag.repeat(num_samples, 1, 1)  # [X, K, D]
+    #
+    sigmas_diag = sigmas_diag.repeat(num_samples, 1, 1)  # [X, K, D]
 
     # compute likelihood
     first_term = log_pis  # [X, K]

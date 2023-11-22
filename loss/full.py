@@ -2,17 +2,18 @@ import torch
 
 
 def get_full_nll_loss(
-    ys: torch.Tensor,  # [X, K, D, 1]
-    pis: torch.Tensor,  # [K]
+    ys: torch.Tensor,  # [X, K, D]
+    pi_logits: torch.Tensor,  # [K]
     mus: torch.Tensor,  # [K, D]
     sigmas: torch.Tensor,  # [K, D, D]
 ):
     num_samples = ys.shape[0]
 
     # 
+    ys = ys.unsqueeze(-1)
 
     # pis are an element of the K-1 simplex
-    log_pis = torch.log(pis)
+    log_pis = torch.log_softmax(pi_logits, dim=0)
     log_pis = log_pis.repeat(num_samples, 1)  # [X, K]
 
     # 
