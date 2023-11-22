@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--num_samples", default=500)
 parser.add_argument("--num_clusters", default=2)
 parser.add_argument("--num_mixtures", default=5)
-parser.add_argument("--seed", type=int, default=44)
+parser.add_argument("--seed", type=int, default=43)
 
 
 if __name__ == "__main__":
@@ -31,7 +31,10 @@ if __name__ == "__main__":
     ys = ys.transpose(0, 1)  # [X, K, D]
     ys = ys.unsqueeze(-1)  # [X, K, D, 1]
 
-    pi_logits = torch.nn.Parameter(torch.rand(K, dtype=torch.float32), requires_grad=True)
+    pi_initial = torch.zeros(K, dtype=torch.float32)
+    #pi_initial = torch.rand(K, dtype=torch.float32)
+    #pi_initial[0] += 0.1
+    pi_logits = torch.nn.Parameter(pi_initial, requires_grad=True)
     mus = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32) * 10, requires_grad=True)
     #sigmas_sqrt = torch.nn.Parameter(torch.rand(K, D, D, dtype=torch.float32), requires_grad=True)
     sigmas_diag = torch.nn.Parameter(torch.rand(K, D, dtype=torch.float32), requires_grad=True)
