@@ -56,3 +56,6 @@ def get_full_nll_loss(
 
     return -1 * torch.mean(log_likelihoods)  # mean across samples
 ```
+
+## Motivation ##
+This project is not associated with any course or program. Instead, I hope that it serves as an educational tool for exploring the capabilities and engineering behind probabilistic modeling, custom loss functions, and differentiable programming in PyTorch.
